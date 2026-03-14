@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brick Hunter - Auth</title>
+<style>
+    :root {
+        --primary: #0e251d;
+        --accent: #ffd700;
+        --danger: #ff4b2b;
+        --glass: rgba(255, 255, 255, 0.1);
+        --bg-dark: #0f0c29;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        /* Animated gradient background */
+        background:#0d3e19;
+        background-size: 400% 400%;
+        animation: gradientBG 15s ease infinite;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #fff;
+        overflow: hidden;
+    }
+
+    @keyframes gradientBG {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    #authBox {
+        background:#082d1d;
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 50px 40px;
+        border-radius: 24px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        text-align: center;
+        width: 350px;
+        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    #authBox:hover {
+        transform: translateY(-10px);
+        border-color: var(--primary);
+    }
+
+    h2 {
+        margin-top: 0;
+        font-size: 28px;
+        letter-spacing: 2px;
+        color: var(--accent);
+        text-transform: uppercase;
+        text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+    }
+
+    input {
+        display: block;
+        width: 100%;
+        margin: 15px 0;
+        padding: 14px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(0, 0, 0, 0.2);
+        color: #fff;
+        font-size: 16px;
+        box-sizing: border-box;
+        transition: all 0.3s ease;
+    }
+
+    input:focus {
+        outline: none;
+        background: rgba(0, 0, 0, 0.4);
+        border-color: var(--primary);
+        box-shadow: 0 0 15px rgb(6, 19, 22);
+    }
+
+    .btn-container {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    button {
+        flex: 1;
+        padding: 14px;
+        border-radius: 12px;
+        border: none;
+        font-weight: 800;
+        cursor: pointer;
+        font-size: 14px;
+        text-transform: uppercase;
+        transition: all 0.3s ease;
+    }
+
+    #signupBtn {
+        background: transparent;
+        border: 2px solid var(--primary);
+        color:#fff;
+        margin-right: 60px;
+    }
+
+    #signupBtn:hover {
+        background: var(--primary);
+        color: #fffafa;
+        box-shadow: 0 0 20px rgba(0, 210, 255, 0.5);
+    }
+
+    #loginBtn {
+        background: #02231c;
+        color: #fff;
+    }
+
+    #loginBtn:hover {
+        filter: brightness(1.2);
+        transform: scale(1.02);
+        box-shadow: 0 0 20px rgba(58, 123, 213, 0.5);
+    }
+
+    #logoutBtn {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: var(--danger);
+        color: #fff;
+        padding: 10px 20px;
+        display: none;
+        width: auto;
+    }
+
+    #userStatus {
+        margin-top: 25px;
+        font-weight: 600;
+        color: rgba(255,255,255,0.7);
+    }
+</style>
+</head>
+<body>
+
+<div id="authBox">
+  <h2>Brick Hunter Login</h2>
+  <input type="email" id="email" placeholder="Email">
+  <input type="password" id="password" placeholder="Password">
+
+  <button id="signupBtn">Sign Up</button>
+  <button id="loginBtn">Login</button>
+</div>
+
+<button id="logoutBtn">Logout</button> <!-- outside authBox -->
+
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+
+// -------------------- FIREBASE CONFIG --------------------
+const firebaseConfig = {
+  apiKey: "AIzaSyAwlreWuC1b3PZAfJqGQsOKCRkiIxdBSJs",
+  authDomain: "brick-hunter.firebaseapp.com",
+  projectId: "brick-hunter",
+  storageBucket: "brick-hunter.firebasestorage.app",
+  messagingSenderId: "517121888892",
+  appId: "1:517121888892:web:3f512a40f655f808676ff9",
+  measurementId: "G-6RDV49WMK8"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+// -------------------- DOM ELEMENTS --------------------
+const email = document.getElementById("email");
+const password = document.getElementById("password");
+const userStatus = document.getElementById("userStatus");
+const authBox = document.getElementById("authBox");
+const logoutBtn = document.getElementById("logoutBtn");
+
+// -------------------- COOKIE FUNCTIONS --------------------
+function setCookie(name, value, hours) {
+  const expires = new Date(Date.now() + hours*3600*1000).toUTCString();
+  document.cookie = `${name}=${value}; expires=${expires}; path=/; Secure; SameSite=Lax`;
+}
+
+function deleteCookie(name) {
+  document.cookie = `${name}=; max-age=0; path=/; Secure; SameSite=Lax`;
+}
+
+// -------------------- SIGN UP --------------------
+document.getElementById("signupBtn").onclick = async () => {
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email.value, password.value);
+    const user = userCredential.user;
+
+    // Save token cookie
+    const token = await user.getIdToken();
+    setCookie("userToken", token, 1);
+
+    // Redirect to game
+    window.location.href = "Game/indexx.html";
+  } catch (error) {
+    alert("Sign up error: " + error.message);
+  }
+};
+
+// -------------------- LOGIN --------------------
+document.getElementById("loginBtn").onclick = async () => {
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email.value, password.value);
+    const user = userCredential.user;
+
+    const token = await user.getIdToken();
+    setCookie("userToken", token, 1);
+
+    window.location.href = "Game/indexx.html";
+  } catch (error) {
+    alert("Login error: " + error.message);
+  }
+};
+
+// -------------------- LOGOUT --------------------
+logoutBtn.onclick = async () => {
+  try {
+    await signOut(auth);
+    deleteCookie("userToken");
+    userStatus.innerText = "Logged out";
+    logoutBtn.style.display = "none";
+    authBox.style.display = "block";
+    // redirect to login page
+    window.location.href = "../../auth.html";
+  } catch (error) {
+    alert("Logout failed: " + error.message);
+  }
+};
+
+// -------------------- AUTH STATE OBSERVER --------------------
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    userStatus.innerText = "Logged in: " + user.email;
+    authBox.style.display = "none";
+    logoutBtn.style.display = "inline-block"; // show logout button
+  } else {
+    userStatus.innerText = "Not logged in";
+    authBox.style.display = "block";
+    logoutBtn.style.display = "none"; // hide logout button
+  }
+});
+</script>
+
+</body>
+</html>

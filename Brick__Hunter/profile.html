@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brick Hunter - Profile</title>
+<style>
+  body { font-family: Arial, sans-serif; text-align: center; margin-top: 30px; }
+  input { display: block; width: 250px; margin: 10px auto; padding: 8px; }
+  button { margin: 5px; padding: 8px 16px; }
+  img { border-radius: 50%; width: 100px; height: 100px; display: block; margin: 10px auto; }
+</style>
+</head>
+<body>
+
+<h2>User Profile</h2>
+<img id="userIcon" src="default-avatar.png" alt="Avatar">
+<p id="userEmail">Email: </p>
+
+<input type="text" id="fullName" placeholder="Full name">
+<input type="number" id="age" placeholder="Age">
+<input type="text" id="photoURL" placeholder="Avatar URL">
+<input type="number" id="highScore" placeholder="High Score" disabled>
+
+<button id="updateProfileBtn">Update Profile</button>
+<button id="logoutBtn">Logout</button>
+
+<p id="statusMsg"></p>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, updateProfile, signOut } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+// --- Firebase config ---
+const firebaseConfig = {
+  apiKey: "AIzaSyAwlreWuC1b3PZAfJqGQsOKCRkiIxdBSJs",
+  authDomain: "brick-hunter.firebaseapp.com",
+  projectId: "brick-hunter",
+  storageBucket: "brick-hunter.firebasestorage.app",
+  messagingSenderId: "517121888892",
+  appId: "1:517121888892:web:3f512a40f655f808676ff9",
+  measurementId: "G-6RDV49WMK8"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// DOM
+const userEmail = document.getElementById("userEmail");
+const userIcon = document.getElementById("userIcon");
+const fullNameInput = document.getElementById("fullName");
+const ageInput = document.getElementById("age");
+const photoURLInput = document.getElementById("photoURL");
+const highScoreInput = document.getElementById("highScore");
+const statusMsg = document.getElementById("statusMsg");
+const updateProfileBtn = document.getElementById("updateProfileBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+
+// --- Load User Data ---
+onAuthStateChanged(auth, async (user) => {
+  if(user){
+    userEmail.innerText = "Email: " + user.email;
+    userIcon.src = user.photoURL || "default-avatar.png";
+    fullNameInput.value = user.displayName || "";
+
+    const userDocRef = doc(db, "users", user.uid);
+    const docSnap = await getDoc(userDocRef);
+    if(docSnap.exists()){
+      const data = docSnap.data();
+      ageInput.value = data.age || "";
+      highScoreInput.value = data.highScore || 0;
+      photoURLInput.value = data.avatarURL || "";
+    }
+  } else {
+    window.location.href = "../../auth.html";
+  }
+});
+
+// --- Update Profile ---
+updateProfileBtn.onclick = async () => {
+  const user = auth.currentUser;
+  if(!user) return;
+  try{
+    // Update Auth info
+    await updateProfile(user, {
+      displayName: fullNameInput.value,
+      photoURL: photoURLInput.value
+    });
+
+    // Update Firestore info
+    await setDoc(doc(db, "users", user.uid), {
+      age: ageInput.value,
+      avatarURL: photoURLInput.value
+    }, { merge: true });
+
+    userIcon.src = photoURLInput.value || "default-avatar.png";
+    statusMsg.innerText = "Profile updated!";
+  } catch(error){
+    statusMsg.innerText = "Update failed: " + error.message;
+  }
+};
+
+// --- Logout ---
+logoutBtn.onclick = async () => {
+  try{
+    await signOut(auth);
+    window.location.href = "../../auth.html";
+  } catch(error){
+    statusMsg.innerText = "Logout failed: " + error.message;
+  }
+};
+</script>
+</body>
+</html>
