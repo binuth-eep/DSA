@@ -1,4 +1,4 @@
-// js/puzzleService.js
+
 class PuzzleService {
     static async fetchChallenge() {
         try {

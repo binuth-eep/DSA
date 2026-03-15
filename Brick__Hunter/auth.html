@@ -154,14 +154,14 @@
   <button id="loginBtn">Login</button>
 </div>
 
-<button id="logoutBtn">Logout</button> <!-- outside authBox -->
+<button id="logoutBtn">Logout</button>
 
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 
-// -------------------- FIREBASE CONFIG --------------------
+
 const firebaseConfig = {
   apiKey: "AIzaSyAwlreWuC1b3PZAfJqGQsOKCRkiIxdBSJs",
   authDomain: "brick-hunter.firebaseapp.com",
@@ -176,14 +176,14 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-// -------------------- DOM ELEMENTS --------------------
+
 const email = document.getElementById("email");
 const password = document.getElementById("password");
 const userStatus = document.getElementById("userStatus");
 const authBox = document.getElementById("authBox");
 const logoutBtn = document.getElementById("logoutBtn");
 
-// -------------------- COOKIE FUNCTIONS --------------------
+
 function setCookie(name, value, hours) {
   const expires = new Date(Date.now() + hours*3600*1000).toUTCString();
   document.cookie = `${name}=${value}; expires=${expires}; path=/; Secure; SameSite=Lax`;
@@ -193,24 +193,24 @@ function deleteCookie(name) {
   document.cookie = `${name}=; max-age=0; path=/; Secure; SameSite=Lax`;
 }
 
-// -------------------- SIGN UP --------------------
+
 document.getElementById("signupBtn").onclick = async () => {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email.value, password.value);
     const user = userCredential.user;
 
-    // Save token cookie
+
     const token = await user.getIdToken();
     setCookie("userToken", token, 1);
 
-    // Redirect to game
+
     window.location.href = "Game/indexx.html";
   } catch (error) {
     alert("Sign up error: " + error.message);
   }
 };
 
-// -------------------- LOGIN --------------------
+
 document.getElementById("loginBtn").onclick = async () => {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email.value, password.value);
@@ -225,7 +225,7 @@ document.getElementById("loginBtn").onclick = async () => {
   }
 };
 
-// -------------------- LOGOUT --------------------
+
 logoutBtn.onclick = async () => {
   try {
     await signOut(auth);
@@ -233,23 +233,23 @@ logoutBtn.onclick = async () => {
     userStatus.innerText = "Logged out";
     logoutBtn.style.display = "none";
     authBox.style.display = "block";
-    // redirect to login page
+  
     window.location.href = "../../auth.html";
   } catch (error) {
     alert("Logout failed: " + error.message);
   }
 };
 
-// -------------------- AUTH STATE OBSERVER --------------------
+
 onAuthStateChanged(auth, (user) => {
   if (user) {
     userStatus.innerText = "Logged in: " + user.email;
     authBox.style.display = "none";
-    logoutBtn.style.display = "inline-block"; // show logout button
+    logoutBtn.style.display = "inline-block"; 
   } else {
     userStatus.innerText = "Not logged in";
     authBox.style.display = "block";
-    logoutBtn.style.display = "none"; // hide logout button
+    logoutBtn.style.display = "none";
   }
 });
 </script>

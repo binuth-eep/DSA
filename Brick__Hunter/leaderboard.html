@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Leaderboard</title>
+</head>
+
+<body>
+
+<h1>Top Players</h1>
+
+<ul id="leaderboard"></ul>
+
+<script type="module">
+
+import { auth } from "./js/firebase.js";
+import LeaderboardManager from "./js/leaderboardManager.js";
+
+const leaderboard = new LeaderboardManager(auth);
+
+leaderboard.display();
+
+</script>
+
+</body>
+</html>
